@@ -1,0 +1,326 @@
+﻿#include "pch.h"
+#include "App.h"
+#include "MainPage.h"
+#include "MainPage.g.cpp"
+
+namespace winrt::educamlite::implementation
+{
+    hstring ToHex(long const& hresult)
+    {
+        wchar_t buffer[11];
+        swprintf_s(buffer, 11, L"0x%08X", static_cast<unsigned int>(hresult));
+        return hstring(buffer);
+    }
+
+    IAsyncOperation<MediaCapture> InitCamera(hstring const& deviceId)
+    {
+        MediaCapture mediaCapture = MediaCapture();
+        MediaCaptureInitializationSettings settings;
+        settings.VideoDeviceId(deviceId);
+        settings.StreamingCaptureMode(StreamingCaptureMode::Video);
+        co_await mediaCapture.InitializeAsync(settings);
+        return mediaCapture;
+    }
+
+    hstring SubtypeToFileExt(hstring const& subtype)
+    {
+        if (subtype == L"NV12") { return L".jpg"; }
+        if (subtype == L"MJPG") { return L".jpg"; }
+        if (subtype == L"YUY2") { return L".jpg"; }
+        return L".jpg";
+    }
+
+    fire_and_forget MainPage::OnCameraChanged(IInspectable const& sender, SelectionChangedEventArgs const&)
+    {
+        SettingsPanelRoot().IsEnabled(false);
+        CameraList().IsEnabled(false);
+        ResolutionList().IsEnabled(false);
+        ResolutionList().SelectedIndex(-1);
+        WaitingControl().IsIndeterminate(true);
+        try
+        {
+            int const& i = CameraList().SelectedIndex();
+            if (mediaCapture)
+            {
+                co_await mediaCapture.StopPreviewAsync();
+                PreviewControl().Source(nullptr);
+            }
+            if (i >= 0)
+            {
+                _Resolutions.clear(); auto items = ResolutionList().Items(); items.Clear();
+                hstring const& deviceId = _Devices.GetAt(i).Id();
+                if (Cameras.find(deviceId) == Cameras.end())
+                {
+                    mediaCapture = co_await InitCamera(deviceId);
+                    Cameras.emplace(deviceId, mediaCapture);
+                } else { mediaCapture = Cameras[deviceId]; }
+
+                auto prevProps = mediaCapture.VideoDeviceController().GetAvailableMediaStreamProperties(MediaStreamType::VideoPreview);
+                for (auto const& prop : prevProps)
+                {
+                    if (auto videoProp = prop.try_as<VideoEncodingProperties>())
+                    {
+                        _Resolutions.push_back(videoProp);
+                        items.Append(box_value(to_hstring(videoProp.Width()) + L"x" + to_hstring(videoProp.Height()) + L" " +
+                                               to_hstring(videoProp.FrameRate().Numerator() / videoProp.FrameRate().Denominator()) + L"fps " +
+                                               videoProp.Subtype()));
+                    }
+                }
+                PreviewControl().Source(mediaCapture);
+                co_await mediaCapture.StartPreviewAsync();
+                ResolutionList().SelectedIndex(0);
+                ResolutionList().IsEnabled(true);
+
+                UpdateVDControl(mediaCapture.VideoDeviceController());
+            } else { mediaCapture = nullptr; }
+            ResolutionList().PlaceholderText(i >= 0 ? L"请选择属性" : L"请先选择摄像头");
+        }
+        catch (hresult_error const& ex)
+        { ShowInfo(muxc::InfoBarSeverity::Error, ex.message() + L"\nHRESULT: " + ToHex(ex.code())); }
+        WaitingControl().IsIndeterminate(false);
+        CameraList().IsEnabled(true);
+        SettingsPanelRoot().IsEnabled(true);
+    }
+
+    fire_and_forget MainPage::OnResolutionChanged(IInspectable const& sender, SelectionChangedEventArgs const&)
+    {
+        SettingsPanelRoot().IsEnabled(false);
+        ResolutionList().IsEnabled(false);
+        WaitingControl().IsIndeterminate(true);
+        try
+        {
+            int const& i = ResolutionList().SelectedIndex();
+            if (i >= 0)
+            {
+                co_await mediaCapture.VideoDeviceController().SetMediaStreamPropertiesAsync(MediaStreamType::VideoPreview, _Resolutions[i]);
+            }
+        }
+        catch (hresult_error const& ex)
+        { ShowInfo(muxc::InfoBarSeverity::Error, ex.message() + L"\nHRESULT: " + ToHex(ex.code())); }
+        WaitingControl().IsIndeterminate(false);
+        if (CameraList().SelectedIndex() >= 0) { ResolutionList().IsEnabled(true); }
+        SettingsPanelRoot().IsEnabled(true);
+    }
+
+    fire_and_forget MainPage::RefreshVideoInputDevices(IInspectable const& sender, RoutedEventArgs const&)
+    {
+        SettingsPanelRoot().IsEnabled(false);
+        CameraList().IsEnabled(false);
+        ResolutionList().IsEnabled(false);
+        CameraList().PlaceholderText(L"正在获取可用设备");
+        ResolutionList().PlaceholderText(L"等待获取");
+        ResolutionList().SelectedIndex(-1);
+        CameraList().SelectedIndex(-1);
+        _Devices.Clear();
+        DeviceInformationCollection const& devs = co_await DeviceInformation::FindAllAsync(DeviceClass::VideoCapture);
+        uint32_t const& size = devs.Size();
+        if (size > 0)
+        {
+            for (uint32_t i = 0; i < size; ++i)
+            { _Devices.Append(devs.GetAt(i)); }
+            CameraList().PlaceholderText(L"请选择摄像头");
+            ResolutionList().PlaceholderText(L"请先选择摄像头");
+            CameraList().IsEnabled(true);
+        }
+        else
+        {
+            CameraList().PlaceholderText(L"没有可用的摄像头"); ResolutionList().PlaceholderText(L"不可用");
+            FocusAdjustmentButton().IsEnabled(false); FocusAdjustmentButton().Content(box_value(L"不可用"));
+        }
+        SettingsPanelRoot().IsEnabled(true);
+    }
+
+    void MainPage::IsFullScreenMode(IInspectable const& sender, RoutedEventArgs const&)
+    {
+        auto item = sender.as<MenuFlyoutItem>();
+        item.Icon().as<FontIcon>().Glyph(_AppView.IsFullScreenMode() ? L"\xE73F" : L"\xE740");
+        item.Text(_AppView.IsFullScreenMode() ? L"退出全屏" : L"全屏");
+    }
+
+    void MainPage::SetFullScreen(IInspectable const&, RoutedEventArgs const&)
+    { if (_AppView.IsFullScreenMode()) { _AppView.ExitFullScreenMode(); } else { _AppView.TryEnterFullScreenMode(); } }
+
+    fire_and_forget MainPage::CloseApp(IInspectable const&, RoutedEventArgs const&)
+    {
+        co_await _AppView.TryConsolidateAsync();
+    }
+
+    void MainPage::HandleFlyoutClose(FlyoutBase const&, FlyoutBaseClosingEventArgs const& e)
+    { if (_ListOpened) { e.Cancel(true); } }
+
+    //Private functions
+    void MainPage::ShowInfo(muxc::InfoBarSeverity const& severity, hstring const& message)
+    {
+        Info().Severity(severity);
+        Info().Message(message);
+        Info().IsOpen(true);
+    }
+
+    void MainPage::UpdateVDControl(VideoDeviceController const& control)
+    {
+        _VDControl = control; _FocusControl = control.Focus();
+        _ExposureControl = control.Exposure(); _AdvEC = control.ExposureCompensationControl();
+        _ZoomControl = control.Zoom(); _AdvZC = control.ZoomControl();
+        auto fc = _FocusControl.Capabilities(); auto ec = _ExposureControl.Capabilities(); auto zc = _ZoomControl.Capabilities();
+        ExposureSlider().ValueChanged(_ECEToken);
+        ZoomSlider().ValueChanged(_ZCEToken);
+        if (fc.Supported())
+        {
+            FocusAdjustmentButton().IsEnabled(true);
+            _AllowAutoFocus = fc.AutoModeSupported();
+            FocusSlider().Minimum(fc.Min() - _AllowAutoFocus * fc.Step());
+            FocusSlider().Maximum(fc.Max());
+            FocusSlider().StepFrequency(fc.Step());
+            FocusSlider().Value(fc.Default());
+        } else { FocusAdjustmentButton().IsEnabled(false); FocusAdjustmentButton().Content(box_value(L"不可用")); }
+        if (_AdvEC.Supported())
+        {
+            ExposureSlider().Minimum(_AdvEC.Min());
+            ExposureSlider().Maximum(_AdvEC.Max());
+            ExposureSlider().StepFrequency(_AdvEC.Step());
+            ExposureSlider().Value(_AdvEC.Value());
+            _ECEToken = ExposureSlider().ValueChanged({ this, &MainPage::AdvExposureChanged });
+            ExposureAdjustmentButton().IsEnabled(true);
+        }
+        else if (ec.Supported())
+        {
+            _ExposureControl.TrySetAuto(false);
+            ExposureSlider().Minimum(ec.Min());
+            ExposureSlider().Maximum(ec.Max());
+            ExposureSlider().StepFrequency(ec.Step());
+            ExposureSlider().Value(ec.Default());
+            _ECEToken = ExposureSlider().ValueChanged({ this, &MainPage::ExposureChanged });
+            ExposureAdjustmentButton().IsEnabled(true);
+        } else { ExposureAdjustmentButton().IsEnabled(false); ExposureAdjustmentButton().Content(box_value(L"不可用")); }
+        if (_AdvZC.Supported())
+        {
+            ZoomSlider().Minimum(_AdvZC.Min());
+            ZoomSlider().Maximum(_AdvZC.Max());
+            ZoomSlider().StepFrequency(_AdvZC.Step());
+            ZoomSlider().Value(_AdvZC.Value());
+            _ECEToken = ZoomSlider().ValueChanged({ this, &MainPage::AdvZoomChanged });
+            ZoomAdjustmentButton().IsEnabled(true);
+        }
+        else if (zc.Supported())
+        {
+            _ZoomControl.TrySetAuto(false);
+            ZoomSlider().Minimum(zc.Min());
+            ZoomSlider().Maximum(zc.Max());
+            ZoomSlider().StepFrequency(zc.Step());
+            ZoomSlider().Value(zc.Default());
+            _ZCEToken = ZoomSlider().ValueChanged({ this, &MainPage::ZoomChanged });
+            ZoomAdjustmentButton().IsEnabled(true);
+        } else { ZoomAdjustmentButton().IsEnabled(false); ZoomAdjustmentButton().Content(box_value(L"不可用")); }
+    }
+
+    void MainPage::FocusChanged(IInspectable const&, RangeBaseValueChangedEventArgs const& e)
+    {
+        if (_AllowAutoFocus && e.NewValue() == FocusSlider().Minimum())
+        {
+            _FocusControl.TrySetAuto(true);
+            FocusAdjustmentButton().Content(box_value(L"自动"));
+        }
+        else
+        {
+            _FocusControl.TrySetAuto(false);
+            _FocusControl.TrySetValue(e.NewValue());
+            FocusAdjustmentButton().Content(box_value(e.NewValue()));
+        }
+    }
+
+    void MainPage::ExposureChanged(IInspectable const&, RangeBaseValueChangedEventArgs const& e)
+    {
+        _ExposureControl.TrySetValue(e.NewValue());
+        ExposureAdjustmentButton().Content(box_value(e.NewValue()));
+    }
+
+    fire_and_forget MainPage::AdvExposureChanged(IInspectable const&, RangeBaseValueChangedEventArgs const& e)
+    {
+        co_await _AdvEC.SetValueAsync(static_cast<float>(e.NewValue()));
+        ExposureAdjustmentButton().Content(box_value(e.NewValue()));
+    }
+
+    void MainPage::ZoomChanged(IInspectable const&, RangeBaseValueChangedEventArgs const& e)
+    {
+        _ZoomControl.TrySetValue(e.NewValue());
+        ZoomAdjustmentButton().Content(box_value(e.NewValue()));
+    }
+
+    void MainPage::AdvZoomChanged(IInspectable const&, RangeBaseValueChangedEventArgs const& e)
+    {
+        _AdvZC.Value(static_cast<float>(e.NewValue()));
+        ZoomAdjustmentButton().Content(box_value(e.NewValue()));
+    }
+
+    fire_and_forget MainPage::CaptureReqquested(IInspectable const& sender, RoutedEventArgs const&)
+    {
+        CaptureButton().IsEnabled(false);
+        try
+        {
+            DateTime now = winrt::clock::now();
+            int const& i = ResolutionList().SelectedIndex();
+            auto picProp = ImageEncodingProperties::CreateJpeg();
+            picProp.Width(_Resolutions[i].Width());
+            picProp.Height(_Resolutions[i].Height());
+            InMemoryRandomAccessStream memStream;
+            co_await mediaCapture.CapturePhotoToStreamAsync(picProp, memStream);
+            CaptureButton().IsEnabled(true);
+        }
+        catch (hresult_error const& ex)
+        { ShowInfo(muxc::InfoBarSeverity::Error, ex.message() + L"\nHRESULT: " + ToHex(ex.code())); CaptureButton().IsEnabled(true); }
+    }
+
+    void MainPage::ListOpened(IInspectable const&, IInspectable const&)
+    { _ListOpened = true; }
+
+    void MainPage::ListClosed(IInspectable const&, IInspectable const&)
+    { _ListOpened = false; }
+
+    //Initialization
+    void MainPage::Init(IInspectable const&, RoutedEventArgs const&)
+    {
+        //InitializeComponent();
+        winrt::com_ptr<App> app = Application::Current().as<App>();
+        app->EnteredBackground([this](auto const&, auto const& e) -> IAsyncAction
+        {
+            auto deferral = e.GetDeferral();
+            if (mediaCapture)
+            {
+                co_await mediaCapture.StopPreviewAsync();
+                PreviewControl().Source(nullptr);
+            }
+            for (auto const& item : Cameras) { item.second.Close(); }
+            Cameras.clear();
+            deferral.Complete();
+        });
+        app->LeavingBackground([this](auto const&, auto const& e) -> IAsyncAction
+        {
+            auto deferral = e.GetDeferral();
+            if (mediaCapture)
+            {
+                hstring const& deviceId = _Devices.GetAt(CameraList().SelectedIndex()).Id();
+                mediaCapture = co_await InitCamera(deviceId);
+                Cameras.emplace(deviceId, mediaCapture);
+                PreviewControl().Source(mediaCapture);
+                co_await mediaCapture.StartPreviewAsync();
+                UpdateVDControl(mediaCapture.VideoDeviceController());
+            } deferral.Complete();
+        });
+        CameraList().DropDownOpened({ this, &MainPage::ListOpened });
+        CameraList().DropDownClosed({ this, &MainPage::ListClosed });
+        ResolutionList().DropDownOpened({ this, &MainPage::ListOpened });
+        ResolutionList().DropDownClosed({ this, &MainPage::ListClosed });
+        FocusSlider().ValueChanged({ this, &MainPage::FocusChanged });
+        _ECEToken = ExposureSlider().ValueChanged([](auto const& ...) { });
+        _ZCEToken = ZoomSlider().ValueChanged([](auto const& ...) { });
+        CaptureButton().Click({ this, &MainPage::CaptureReqquested });
+        CameraList().ItemsSource(_Devices);
+        RefreshVideoInputDevices();
+    }
+
+    MainPage::MainPage()
+    {
+        // Xaml objects should not call InitializeComponent during construction.
+        // See https://github.com/microsoft/cppwinrt/tree/master/nuget#initializecomponent
+    }
+}

@@ -1,0 +1,201 @@
+﻿<Page
+    x:Class="educamlite.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:educamlite"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:muxca="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
+    muxc:BackdropMaterial.ApplyToRootOrPageBackground="True">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <CaptureElement x:Name="PreviewControl" Source="{x:Null}" Stretch="Uniform" RequestedTheme="Dark" Grid.RowSpan="2" Loaded="Init"/>
+        <muxc:ProgressRing x:Name="WaitingControl" IsActive="True" IsIndeterminate="False" Width="128" Height="128" Grid.RowSpan="2"/>
+        <muxc:InfoBar x:Name="Info" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+        <ContentPresenter Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}" CornerRadius="0,4,0,0" HorizontalAlignment="Left" Grid.Row="1">
+            <Button>
+                <Button.Flyout>
+                    <MenuFlyout Placement="Top">
+                        <MenuFlyoutItem Click="SetFullScreen" Loaded="IsFullScreenMode">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem Text="退出应用" Click="CloseApp">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE8BB;"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </Button.Flyout>
+                <StackPanel>
+                    <muxc:AnimatedIcon Width="24">
+                        <muxc:AnimatedIcon.Source>
+                            <muxca:AnimatedGlobalNavigationButtonVisualSource/>
+                        </muxc:AnimatedIcon.Source>
+                    </muxc:AnimatedIcon>
+                    <TextBlock Text="菜单"/>
+                </StackPanel>
+            </Button>
+        </ContentPresenter>
+        <ScrollViewer ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled"
+                              HorizontalAlignment="Center" Grid.Row="1">
+            <StackPanel Orientation="Horizontal" Spacing="4" CornerRadius="4,4,0,0" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
+                <AppBarSeparator/>
+                <Button x:Name="CaptureButton">
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE722;" FontSize="24"/>
+                        <TextBlock Text="拍照"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="CaptureDelayButton">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="Top">
+                            <MenuFlyoutItem Text="延迟3秒">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="延迟5秒">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="延迟10秒">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE916;" FontSize="24"/>
+                        <TextBlock Text="延时拍照"/>
+                    </StackPanel>
+                </Button>
+                <Button>
+                    <Button.Flyout>
+                        <Flyout Placement="Top">
+                            <ContentControl x:Name="GraphicAdjustmentRoot">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="旋转" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="2">
+                                        <FontIcon Glyph="&#xE7AD;" FlowDirection="RightToLeft" MirroredWhenRightToLeft="True"/>
+                                    </Button>
+                                    <Button Grid.Column="4">
+                                        <FontIcon Glyph="&#xE7AD;" FlowDirection="LeftToRight"/>
+                                    </Button>
+                                    <TextBlock Text="镜像" VerticalAlignment="Center" Grid.Row="2"/>
+                                    <ToggleSwitch x:Name="MirroringToggler" MinWidth="0" OnContent="" OffContent="" HorizontalAlignment="Right" Margin="0,0,-12,0" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3"/>
+                                </Grid>
+                            </ContentControl>
+                        </Flyout>
+                    </Button.Flyout>
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE714;" FontSize="24"/>
+                        <TextBlock Text="画面调节"/>
+                    </StackPanel>
+                </Button>
+                <Button>
+                    <Button.Flyout>
+                        <Flyout Placement="Top" Closing="HandleFlyoutClose">
+                            <ContentControl x:Name="SettingsPanelRoot">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="摄像头" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="CameraList" SelectionChanged="OnCameraChanged" HorizontalAlignment="Right" Grid.Column="2">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="wde:DeviceInformation" xmlns:wde="using:Windows.Devices.Enumeration">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="20"/>
+                                                        <ColumnDefinition Width="5"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <FontIcon Glyph="&#xE722;"/>
+                                                    <TextBlock Text="{x:Bind Name}" TextWrapping="Wrap" Grid.Column="2"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <Button Content="&#xE72C;" FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="20" ToolTipService.ToolTip="刷新" Click="RefreshVideoInputDevices" Margin="5,0,0,0" Grid.Column="3"/>
+                                    <TextBlock Text="视频编码属性" VerticalAlignment="Center" Grid.Row="2"/>
+                                    <ComboBox x:Name="ResolutionList" SelectionChanged="OnResolutionChanged" HorizontalAlignment="Right" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2"/>
+                                    <TextBlock Text="对焦" VerticalAlignment="Center" Grid.Row="4"/>
+                                    <Button x:Name="FocusAdjustmentButton" Content="不可用" IsEnabled="False" Height="33" HorizontalAlignment="Right" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2">
+                                        <Button.Flyout>
+                                            <Flyout Placement="Right">
+                                                <Slider x:Name="FocusSlider" Orientation="Vertical" IsThumbToolTipEnabled="False" Height="224"/>
+                                            </Flyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                    <TextBlock Text="曝光" VerticalAlignment="Center" Grid.Row="6"/>
+                                    <Button x:Name="ExposureAdjustmentButton" Content="不可用" IsEnabled="False" Height="33" HorizontalAlignment="Right" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2">
+                                        <Button.Flyout>
+                                            <Flyout Placement="Right">
+                                                <Slider x:Name="ExposureSlider" Orientation="Vertical" IsThumbToolTipEnabled="False" Height="224"/>
+                                            </Flyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                    <TextBlock Text="镜头缩放" VerticalAlignment="Center" Grid.Row="8"/>
+                                    <Button x:Name="ZoomAdjustmentButton" Content="不可用" IsEnabled="False" Height="33" HorizontalAlignment="Right" Grid.Row="8" Grid.Column="2" Grid.ColumnSpan="2">
+                                        <Button.Flyout>
+                                            <Flyout Placement="Right">
+                                                <Slider x:Name="ZoomSlider" Orientation="Vertical" IsThumbToolTipEnabled="False" Height="224"/>
+                                            </Flyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                            </ContentControl>
+                        </Flyout>
+                    </Button.Flyout>
+                    <StackPanel>
+                        <muxc:AnimatedIcon Width="24">
+                            <muxc:AnimatedIcon.Source>
+                                <muxca:AnimatedSettingsVisualSource/>
+                            </muxc:AnimatedIcon.Source>
+                        </muxc:AnimatedIcon>
+                        <TextBlock Text="设置"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+
+</Page>

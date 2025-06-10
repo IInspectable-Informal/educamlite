@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.35425.106
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "educamlite", "educamlite.vcxproj", "{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|ARM = Release|ARM
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|ARM.ActiveCfg = Release|ARM
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|ARM.Build.0 = Release|ARM
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|ARM.Deploy.0 = Release|ARM
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|ARM64.ActiveCfg = Release|ARM64
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|ARM64.Build.0 = Release|ARM64
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|ARM64.Deploy.0 = Release|ARM64
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|x64.ActiveCfg = Release|x64
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|x64.Build.0 = Release|x64
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|x64.Deploy.0 = Release|x64
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|x86.ActiveCfg = Release|Win32
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|x86.Build.0 = Release|Win32
+		{732D6944-B4A8-4B90-9CA9-34CF7C524BB7}.Release|x86.Deploy.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6BA3FF1-36A2-4032-B263-804EE550F2F1}
+	EndGlobalSection
+EndGlobal
