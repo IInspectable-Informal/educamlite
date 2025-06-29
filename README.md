@@ -1,7 +1,7 @@
 # 第三方通用视频展台
 
 ## 简介
-###### 注意：本分支（experimental/charp 分支）仅为快速验证功能可行性的分支（受限于C++编译器速度），最终版本请看 [main 分支](https://github.com/IInspectable-Informal/educamlite)。
+###### 注意：本分支（experimental/charp 分支）仅为快速验证功能可行性的分支（受限于C++编译器速度），最终版本请看 [main 分支](https://github.com/IInspectable-Informal/educamlite/tree/main)。
 ###### 注意：由于缺少物理摄像头，因此本项目开发受阻。
 本应用旨在优化高性能，提供更好的教学体验，减少资源占用并延长教学一体机更换周期。
 当然，不止需要我优化视频展台，更需要广大开发者共同优化更多的软件，不然想延长周期简直是杯水车薪。
