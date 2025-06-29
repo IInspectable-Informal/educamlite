@@ -1,0 +1,35 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.35425.106
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "educamlite.cs", "educamlite.cs.csproj", "{559DC423-F3EA-410F-9800-6EEA4CD91E3D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|ARM = Release|ARM
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|ARM.ActiveCfg = Release|ARM
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|ARM.Build.0 = Release|ARM
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|ARM.Deploy.0 = Release|ARM
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|ARM64.ActiveCfg = Release|ARM64
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|ARM64.Build.0 = Release|ARM64
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|ARM64.Deploy.0 = Release|ARM64
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|x64.ActiveCfg = Release|x64
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|x64.Build.0 = Release|x64
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|x64.Deploy.0 = Release|x64
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|x86.ActiveCfg = Release|x86
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|x86.Build.0 = Release|x86
+		{559DC423-F3EA-410F-9800-6EEA4CD91E3D}.Release|x86.Deploy.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {36AE86A7-9E3A-4819-BC01-E4514954F6D2}
+	EndGlobalSection
+EndGlobal
