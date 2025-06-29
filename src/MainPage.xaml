@@ -47,16 +47,40 @@
         </ContentPresenter>
         <ScrollViewer ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
                               VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled"
-                              HorizontalAlignment="Center" Grid.Row="1">
+                              HorizontalAlignment="Center" Margin="60,0,60,0" Grid.Row="1">
             <StackPanel Orientation="Horizontal" Spacing="4" CornerRadius="4,4,0,0" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
+                <RadioButton IsChecked="True" GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE8B0;" FontSize="24"/>
+                        <TextBlock Text="移动"/>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE70F;" FontSize="24"/>
+                        <TextBlock Text="批注"/>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE75C;" FontSize="24"/>
+                        <TextBlock Text="橡皮"/>
+                    </StackPanel>
+                </RadioButton>
+                <Button>
+                    <StackPanel>
+                        <FontIcon Glyph="&#xE7A7;" FontSize="24"/>
+                        <TextBlock Text="撤销"/>
+                    </StackPanel>
+                </Button>
                 <AppBarSeparator/>
-                <Button x:Name="CaptureButton">
+                <Button x:Name="CaptureButton" IsEnabled="False">
                     <StackPanel>
                         <FontIcon Glyph="&#xE722;" FontSize="24"/>
                         <TextBlock Text="拍照"/>
                     </StackPanel>
                 </Button>
-                <Button x:Name="CaptureDelayButton">
+                <Button x:Name="CaptureDelayButton" IsEnabled="False">
                     <Button.Flyout>
                         <MenuFlyout Placement="Top">
                             <MenuFlyoutItem Text="延迟3秒">

@@ -52,7 +52,7 @@ namespace winrt::educamlite::implementation
         fire_and_forget AdvExposureChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&);
         void ZoomChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&);
         void AdvZoomChanged(IInspectable const&, RangeBaseValueChangedEventArgs const&);
-        fire_and_forget CaptureReqquested(IInspectable const& = nullptr, RoutedEventArgs const& = nullptr);
+        fire_and_forget CaptureRequested(IInspectable const& = nullptr, RoutedEventArgs const& = nullptr);
         void ListOpened(IInspectable const&, IInspectable const&);
         void ListClosed(IInspectable const&, IInspectable const&);
     };

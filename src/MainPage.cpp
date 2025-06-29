@@ -5,6 +5,9 @@
 
 namespace winrt::educamlite::implementation
 {
+    constexpr std::chrono::sys_days winEpoch{ std::chrono::year{1601}/1/1 };
+    const StorageFolder AppFolder = ApplicationData::Current().LocalFolder();
+
     hstring ToHex(long const& hresult)
     {
         wchar_t buffer[11];
@@ -19,7 +22,7 @@ namespace winrt::educamlite::implementation
         settings.VideoDeviceId(deviceId);
         settings.StreamingCaptureMode(StreamingCaptureMode::Video);
         co_await mediaCapture.InitializeAsync(settings);
-        return mediaCapture;
+        co_return mediaCapture;
     }
 
     hstring SubtypeToFileExt(hstring const& subtype)
@@ -30,12 +33,33 @@ namespace winrt::educamlite::implementation
         return L".jpg";
     }
 
+    hstring GetCurrentTimeString()
+    {
+        DateTime dateTime = winrt::clock::now();
+        auto tp = winEpoch + std::chrono::duration_cast<std::chrono::system_clock::duration>(dateTime.time_since_epoch());
+
+        auto days = floor<std::chrono::days>(tp);
+        std::chrono::year_month_day ymd{days};
+
+        std::chrono::hh_mm_ss hms{ tp - days };
+
+        return to_hstring(int(ymd.year())) + L"-" +
+               to_hstring(unsigned(ymd.month())) + L"-" +
+               to_hstring(unsigned(ymd.day())) + L"_" +
+               to_hstring(hms.hours().count()) + L"-" +
+               to_hstring(hms.minutes().count()) + L"-" +
+               to_hstring(hms.seconds().count()) + L"-" +
+               to_hstring(std::chrono::duration_cast<std::chrono::milliseconds>(hms.subseconds()).count());
+    }
+
     fire_and_forget MainPage::OnCameraChanged(IInspectable const& sender, SelectionChangedEventArgs const&)
     {
         SettingsPanelRoot().IsEnabled(false);
         CameraList().IsEnabled(false);
         ResolutionList().IsEnabled(false);
         ResolutionList().SelectedIndex(-1);
+        CaptureButton().IsEnabled(false);
+        CaptureDelayButton().IsEnabled(false);
         WaitingControl().IsIndeterminate(true);
         try
         {
@@ -70,6 +94,8 @@ namespace winrt::educamlite::implementation
                 co_await mediaCapture.StartPreviewAsync();
                 ResolutionList().SelectedIndex(0);
                 ResolutionList().IsEnabled(true);
+                CaptureDelayButton().IsEnabled(true);
+                CaptureButton().IsEnabled(true);
 
                 UpdateVDControl(mediaCapture.VideoDeviceController());
             } else { mediaCapture = nullptr; }
@@ -252,19 +278,20 @@ namespace winrt::educamlite::implementation
         ZoomAdjustmentButton().Content(box_value(e.NewValue()));
     }
 
-    fire_and_forget MainPage::CaptureReqquested(IInspectable const& sender, RoutedEventArgs const&)
+    fire_and_forget MainPage::CaptureRequested(IInspectable const& sender, RoutedEventArgs const&)
     {
         CaptureButton().IsEnabled(false);
         try
         {
-            DateTime now = winrt::clock::now();
             int const& i = ResolutionList().SelectedIndex();
-            auto picProp = ImageEncodingProperties::CreateJpeg();
-            picProp.Width(_Resolutions[i].Width());
-            picProp.Height(_Resolutions[i].Height());
             InMemoryRandomAccessStream memStream;
-            co_await mediaCapture.CapturePhotoToStreamAsync(picProp, memStream);
+            co_await mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties::CreateJpeg(), memStream);
             CaptureButton().IsEnabled(true);
+            memStream.Seek(0);
+            auto fileStream = co_await(co_await AppFolder.CreateFileAsync(GetCurrentTimeString() + SubtypeToFileExt(_Resolutions[i].Subtype()),
+                                                CreationCollisionOption::GenerateUniqueName)
+                                      ).OpenAsync(FileAccessMode::ReadWrite);
+            co_await RandomAccessStream::CopyAndCloseAsync(memStream, fileStream);
         }
         catch (hresult_error const& ex)
         { ShowInfo(muxc::InfoBarSeverity::Error, ex.message() + L"\nHRESULT: " + ToHex(ex.code())); CaptureButton().IsEnabled(true); }
@@ -313,7 +340,7 @@ namespace winrt::educamlite::implementation
         FocusSlider().ValueChanged({ this, &MainPage::FocusChanged });
         _ECEToken = ExposureSlider().ValueChanged([](auto const& ...) { });
         _ZCEToken = ZoomSlider().ValueChanged([](auto const& ...) { });
-        CaptureButton().Click({ this, &MainPage::CaptureReqquested });
+        CaptureButton().Click({ this, &MainPage::CaptureRequested });
         CameraList().ItemsSource(_Devices);
         RefreshVideoInputDevices();
     }
