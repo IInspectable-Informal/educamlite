@@ -72,7 +72,7 @@ namespace winrt::educamlite::implementation
             if (i >= 0)
             {
                 _Resolutions.clear(); auto items = ResolutionList().Items(); items.Clear();
-                hstring const& deviceId = _Devices.GetAt(i).Id();
+                hstring const& deviceId = _Devices[i].Id();
                 if (Cameras.find(deviceId) == Cameras.end())
                 {
                     mediaCapture = co_await InitCamera(deviceId);
@@ -130,20 +130,19 @@ namespace winrt::educamlite::implementation
 
     fire_and_forget MainPage::RefreshVideoInputDevices(IInspectable const& sender, RoutedEventArgs const&)
     {
-        SettingsPanelRoot().IsEnabled(false);
-        CameraList().IsEnabled(false);
-        ResolutionList().IsEnabled(false);
-        CameraList().PlaceholderText(L"正在获取可用设备");
-        ResolutionList().PlaceholderText(L"等待获取");
-        ResolutionList().SelectedIndex(-1);
-        CameraList().SelectedIndex(-1);
-        _Devices.Clear();
+        SettingsPanelRoot().IsEnabled(false); CameraList().IsEnabled(false); ResolutionList().IsEnabled(false);
+        CameraList().PlaceholderText(L"正在获取可用设备"); ResolutionList().PlaceholderText(L"等待获取");
+        ResolutionList().SelectedIndex(-1); CameraList().SelectedIndex(-1);
+        auto const& items = CameraList().Items(); items.Clear(); _Devices.clear();
         DeviceInformationCollection const& devs = co_await DeviceInformation::FindAllAsync(DeviceClass::VideoCapture);
         uint32_t const& size = devs.Size();
         if (size > 0)
         {
-            for (uint32_t i = 0; i < size; ++i)
-            { _Devices.Append(devs.GetAt(i)); }
+            for (auto const& dev : devs)
+            {
+                _Devices.push_back(dev);
+                items.Append(box_value(dev.Name()));
+            }
             CameraList().PlaceholderText(L"请选择摄像头");
             ResolutionList().PlaceholderText(L"请先选择摄像头");
             CameraList().IsEnabled(true);
@@ -155,6 +154,9 @@ namespace winrt::educamlite::implementation
         }
         SettingsPanelRoot().IsEnabled(true);
     }
+
+    void MainPage::TmpDirMgrFlyoutOpening(IInspectable const&, RoutedEventArgs const&)
+    { _TempFolderManagerFlyout.ShowAt(MenuButton()); }
 
     void MainPage::IsFullScreenMode(IInspectable const& sender, RoutedEventArgs const&)
     {
@@ -173,6 +175,61 @@ namespace winrt::educamlite::implementation
 
     void MainPage::HandleFlyoutClose(FlyoutBase const&, FlyoutBaseClosingEventArgs const& e)
     { if (_ListOpened) { e.Cancel(true); } }
+
+    void MainPage::RadioButtonClicked(IInspectable const& sender, RoutedEventArgs const&)
+    {
+        auto control = sender.as<RadioButton>();
+        auto tag = control.Tag().as<hstring>()[0];
+        if (tag != _Selection)
+        { _Selection = tag; }
+        else
+        {
+            switch (tag)
+            {
+                case L'1':
+                {
+                    _PenColorPickerFlyout.ShowAt(control);
+                    break;
+                }
+                case L'2':
+                {
+                    _EraserButtonFlyout.ShowAt(control);
+                    break;
+                }
+            }
+        }
+    }
+
+    void MainPage::ListButtonClicked(IInspectable const& sender, RoutedEventArgs const&)
+    {
+        try
+        {
+            bool isOpened = sender.as<ToggleButton>().IsChecked().Value();
+            ListButtonText().Text(isOpened ? L"收起" : L"展开");
+            auto children = PicListPanelStoryboard().Children();
+            auto doubleAnimation = children.GetAt(0).as<DoubleAnimation>();
+            auto discreteObjectKeyFrame = children.GetAt(1).as<ObjectAnimationUsingKeyFrames>().KeyFrames().GetAt(0);
+            if (isOpened)
+            {
+                doubleAnimation.From(ActualHeight());
+                doubleAnimation.To(0.0);
+                discreteObjectKeyFrame.KeyTime(KeyTimeHelper::FromTimeSpan(TimeSpan(0)));
+                discreteObjectKeyFrame.Value(box_value(Visibility::Visible));
+            }
+            else
+            {
+                doubleAnimation.From(0.0);
+                doubleAnimation.To(ActualHeight());
+                discreteObjectKeyFrame.KeyTime(KeyTimeHelper::FromTimeSpan(TimeSpan(3000000)));
+                discreteObjectKeyFrame.Value(box_value(Visibility::Collapsed));
+            }
+            PicListPanelStoryboard().Begin();
+        }
+        catch (hresult_error const& ex)
+        {
+            ShowInfo(muxc::InfoBarSeverity::Error, ex.message() + L"\nHRESULT: " + ToHex(ex.code()));
+        }
+    }
 
     //Private functions
     void MainPage::ShowInfo(muxc::InfoBarSeverity const& severity, hstring const& message)
@@ -292,9 +349,22 @@ namespace winrt::educamlite::implementation
                                                 CreationCollisionOption::GenerateUniqueName)
                                       ).OpenAsync(FileAccessMode::ReadWrite);
             co_await RandomAccessStream::CopyAndCloseAsync(memStream, fileStream);
+            memStream.Seek(0);
+            auto items = PicList().Items();
+            ListButton().IsChecked(true);
+            items.Append(PicItem(memStream, items.Size() + 1));
         }
         catch (hresult_error const& ex)
         { ShowInfo(muxc::InfoBarSeverity::Error, ex.message() + L"\nHRESULT: " + ToHex(ex.code())); CaptureButton().IsEnabled(true); }
+    }
+
+    void MainPage::PicListSizeChanged(IInspectable const&, SizeChangedEventArgs const& e)
+    {
+        if (e.NewSize().Height > e.PreviousSize().Height)
+        {
+            auto scrollViewer = PicList().Parent().as<ScrollViewer>();
+            scrollViewer.ScrollToVerticalOffset(scrollViewer.ExtentHeight());
+        }
     }
 
     void MainPage::ListOpened(IInspectable const&, IInspectable const&)
@@ -325,7 +395,7 @@ namespace winrt::educamlite::implementation
             auto deferral = e.GetDeferral();
             if (mediaCapture)
             {
-                hstring const& deviceId = _Devices.GetAt(CameraList().SelectedIndex()).Id();
+                hstring const& deviceId = _Devices[CameraList().SelectedIndex()].Id();
                 mediaCapture = co_await InitCamera(deviceId);
                 Cameras.emplace(deviceId, mediaCapture);
                 PreviewControl().Source(mediaCapture);
@@ -333,15 +403,19 @@ namespace winrt::educamlite::implementation
                 UpdateVDControl(mediaCapture.VideoDeviceController());
             } deferral.Complete();
         });
+        _PenColorPickerFlyout = Resources().Lookup(box_value(L"PenColorPickerFlyout")).as<Flyout>();
+        _EraserButtonFlyout = Resources().Lookup(box_value(L"EraserButtonFlyout")).as<Flyout>();
+        _TempFolderManagerFlyout = Resources().Lookup(box_value(L"TempFolderManagerFlyout")).as<Flyout>();
+        Resources().Clear();
         CameraList().DropDownOpened({ this, &MainPage::ListOpened });
         CameraList().DropDownClosed({ this, &MainPage::ListClosed });
         ResolutionList().DropDownOpened({ this, &MainPage::ListOpened });
         ResolutionList().DropDownClosed({ this, &MainPage::ListClosed });
         FocusSlider().ValueChanged({ this, &MainPage::FocusChanged });
+        PicList().SizeChanged({ this, &MainPage::PicListSizeChanged });
         _ECEToken = ExposureSlider().ValueChanged([](auto const& ...) { });
         _ZCEToken = ZoomSlider().ValueChanged([](auto const& ...) { });
         CaptureButton().Click({ this, &MainPage::CaptureRequested });
-        CameraList().ItemsSource(_Devices);
         RefreshVideoInputDevices();
     }
 
@@ -349,5 +423,12 @@ namespace winrt::educamlite::implementation
     {
         // Xaml objects should not call InitializeComponent during construction.
         // See https://github.com/microsoft/cppwinrt/tree/master/nuget#initializecomponent
+    }
+
+    //Destructor
+    MainPage::~MainPage()
+    {
+        for (auto const& item : Cameras)
+        { item.second.Close(); }
     }
 }

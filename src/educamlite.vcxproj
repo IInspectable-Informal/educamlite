@@ -80,6 +80,10 @@
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <LanguageStandard Condition="'$(VisualStudioVersion)' == '16.0'">stdcpp17</LanguageStandard>
+      <LanguageStandard Condition="'$(VisualStudioVersion)' == '17.0'">stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -95,6 +99,10 @@
     </ClInclude>
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="PicItem.h">
+      <DependentUpon>PicItem.idl</DependentUpon>
+      <SubType>Code</SubType>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +138,10 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="PicItem.cpp">
+      <DependentUpon>PicItem.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">
@@ -137,6 +149,9 @@
     </Midl>
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="PicItem.idl">
+      <SubType>Designer</SubType>
     </Midl>
   </ItemGroup>
   <ItemGroup>

@@ -15,13 +15,83 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <CaptureElement x:Name="PreviewControl" Source="{x:Null}" Stretch="Uniform" RequestedTheme="Dark" Grid.RowSpan="2" Loaded="Init"/>
+        <Grid Grid.RowSpan="2">
+            <Frame Background="black"/>
+            <CaptureElement x:Name="PreviewControl" Source="{x:Null}" Stretch="Uniform" Loaded="Init"/>
+        </Grid>
         <muxc:ProgressRing x:Name="WaitingControl" IsActive="True" IsIndeterminate="False" Width="128" Height="128" Grid.RowSpan="2"/>
+        <Grid x:Name="PicListPanel" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}" MinWidth="348" RenderTransformOrigin="0.5,1"
+              Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,0,0,5" CornerRadius="0,0,0,8">
+            <Grid.Resources>
+                <Storyboard x:Name="PicListPanelStoryboard">
+                    <DoubleAnimation Storyboard.TargetName="PicListPanelTranslation"
+                                     Storyboard.TargetProperty="TranslateY"
+                                     From="0" To="0" Duration="0:0:0.3">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PicListPanel"
+                                                   Storyboard.TargetProperty="Visibility">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0.3" Value="Collapsed"/>
+                    </ObjectAnimationUsingKeyFrames>
+                </Storyboard>
+            </Grid.Resources>
+            <Grid.RenderTransform>
+                <CompositeTransform x:Name="PicListPanelTranslation" TranslateY="0"/>
+            </Grid.RenderTransform>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer>
+                <GridView x:Name="PicList" MinWidth="348" Margin="0,8,0,0" Padding="8,0,8,0" VerticalAlignment="Bottom">
+                    <GridView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsWrapGrid Orientation="Vertical"/>
+                        </ItemsPanelTemplate>
+                    </GridView.ItemsPanel>
+                </GridView>
+            </ScrollViewer>
+            <CommandBar x:Name="Commands" DefaultLabelPosition="Right" Grid.Row="1">
+                <AppBarButton Label="添加">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE710;"/>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton Label="移除" Visibility="Collapsed">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE738;"/>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton Label="删除" Visibility="Collapsed">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE74D;"/>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton Label="保存" Visibility="Collapsed">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE74E;"/>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton Label="多选">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE762;"/>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </CommandBar>
+        </Grid>
         <muxc:InfoBar x:Name="Info" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
         <ContentPresenter Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}" CornerRadius="0,4,0,0" HorizontalAlignment="Left" Grid.Row="1">
-            <Button>
+            <Button x:Name="MenuButton">
                 <Button.Flyout>
                     <MenuFlyout Placement="Top">
+                        <MenuFlyoutItem Text="临时存储目录" Click="TmpDirMgrFlyoutOpening">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE8B7;"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator/>
                         <MenuFlyoutItem Click="SetFullScreen" Loaded="IsFullScreenMode">
                             <MenuFlyoutItem.Icon>
                                 <FontIcon/>
@@ -49,19 +119,19 @@
                               VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled"
                               HorizontalAlignment="Center" Margin="60,0,60,0" Grid.Row="1">
             <StackPanel Orientation="Horizontal" Spacing="4" CornerRadius="4,4,0,0" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
-                <RadioButton IsChecked="True" GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
+                <RadioButton Tag="0" Click="RadioButtonClicked" IsChecked="True" GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
                     <StackPanel>
                         <FontIcon Glyph="&#xE8B0;" FontSize="24"/>
                         <TextBlock Text="移动"/>
                     </StackPanel>
                 </RadioButton>
-                <RadioButton GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
+                <RadioButton Tag="1" Click="RadioButtonClicked" GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
                     <StackPanel>
                         <FontIcon Glyph="&#xE70F;" FontSize="24"/>
                         <TextBlock Text="批注"/>
                     </StackPanel>
                 </RadioButton>
-                <RadioButton GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
+                <RadioButton Tag="2" Click="RadioButtonClicked" GroupName="Tool" Style="{StaticResource ToggleButtonLikeRadioStyle}">
                     <StackPanel>
                         <FontIcon Glyph="&#xE75C;" FontSize="24"/>
                         <TextBlock Text="橡皮"/>
@@ -83,21 +153,9 @@
                 <Button x:Name="CaptureDelayButton" IsEnabled="False">
                     <Button.Flyout>
                         <MenuFlyout Placement="Top">
-                            <MenuFlyoutItem Text="延迟3秒">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem Text="延迟5秒">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem Text="延迟10秒">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon/>
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="延迟3秒" Tag="3"/>
+                            <MenuFlyoutItem Text="延迟5秒" Tag="5"/>
+                            <MenuFlyoutItem Text="延迟10秒" Tag="10"/>
                         </MenuFlyout>
                     </Button.Flyout>
                     <StackPanel>
@@ -136,7 +194,7 @@
                         </Flyout>
                     </Button.Flyout>
                     <StackPanel>
-                        <FontIcon Glyph="&#xE714;" FontSize="24"/>
+                        <FontIcon Glyph="&#xE9E9;" FontSize="24"/>
                         <TextBlock Text="画面调节"/>
                     </StackPanel>
                 </Button>
@@ -163,21 +221,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="摄像头" VerticalAlignment="Center"/>
-                                    <ComboBox x:Name="CameraList" SelectionChanged="OnCameraChanged" HorizontalAlignment="Right" Grid.Column="2">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate x:DataType="wde:DeviceInformation" xmlns:wde="using:Windows.Devices.Enumeration">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="20"/>
-                                                        <ColumnDefinition Width="5"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <FontIcon Glyph="&#xE722;"/>
-                                                    <TextBlock Text="{x:Bind Name}" TextWrapping="Wrap" Grid.Column="2"/>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <ComboBox x:Name="CameraList" SelectionChanged="OnCameraChanged" HorizontalAlignment="Right" Grid.Column="2"/>
                                     <Button Content="&#xE72C;" FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="20" ToolTipService.ToolTip="刷新" Click="RefreshVideoInputDevices" Margin="5,0,0,0" Grid.Column="3"/>
                                     <TextBlock Text="视频编码属性" VerticalAlignment="Center" Grid.Row="2"/>
                                     <ComboBox x:Name="ResolutionList" SelectionChanged="OnResolutionChanged" HorizontalAlignment="Right" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2"/>
@@ -220,6 +264,32 @@
                 </Button>
             </StackPanel>
         </ScrollViewer>
+        <ContentPresenter Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}" CornerRadius="4,0,0,0" HorizontalAlignment="Right" Grid.Row="1">
+            <ToggleButton x:Name="ListButton" IsThreeState="False" Checked="ListButtonClicked" Unchecked="ListButtonClicked" Template="{StaticResource PicListButtonTemplate}">
+                <StackPanel>
+                    <muxc:AnimatedIcon Width="24">
+                        <muxc:AnimatedIcon.Source>
+                            <muxca:AnimatedChevronUpDownSmallVisualSource/>
+                        </muxc:AnimatedIcon.Source>
+                    </muxc:AnimatedIcon>
+                    <TextBlock x:Name="ListButtonText" Text="展开"/>
+                </StackPanel>
+            </ToggleButton>
+        </ContentPresenter>
     </Grid>
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <Flyout x:Key="PenColorPickerFlyout" Placement="Top">
+                <muxc:ColorPicker x:Name="PenColorPicker" ColorSpectrumShape="Ring" IsMoreButtonVisible="True" IsAlphaEnabled="True"/>
+            </Flyout>
+            <Flyout x:Key="EraserButtonFlyout" Placement="Top">
+                
+            </Flyout>
+            <Flyout x:Key="TempFolderManagerFlyout" Placement="Top">
+                
+            </Flyout>
+        </ResourceDictionary>
+    </Page.Resources>
 
 </Page>

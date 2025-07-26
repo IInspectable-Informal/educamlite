@@ -14,6 +14,7 @@
 #include <winrt/Windows.Media.MediaProperties.h>
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.UI.h>
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.UI.ViewManagement.h>
 #include <winrt/Windows.UI.Xaml.h>
@@ -23,10 +24,8 @@
 #include <winrt/Windows.UI.Xaml.Interop.h>
 #include <winrt/Windows.UI.Xaml.Markup.h>
 #include <winrt/Windows.UI.Xaml.Media.h>
-
-//Win2D
-#include <winrt/Microsoft.Graphics.Canvas.h>
-#include <winrt/Microsoft.Graphics.Canvas.UI.Xaml.h>
+#include <winrt/Windows.UI.Xaml.Media.Animation.h>
+#include <winrt/Windows.UI.Xaml.Media.Imaging.h>
 
 //WinUI Library
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
