@@ -181,7 +181,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Win32 Development Projects\educamlite.Minimizer\educamlite.Minimizer.vcxproj">
+    <ProjectReference Include="..\educamlite.Minimizer\educamlite.Minimizer.vcxproj">
       <Project>{e7eb9cfb-cb4b-43b2-9b67-542166c03d32}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -200,4 +200,5 @@
     <Error Condition="!Exists('packages\Microsoft.UI.Xaml.2.7.3\build\native\Microsoft.UI.Xaml.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.UI.Xaml.2.7.3\build\native\Microsoft.UI.Xaml.targets'))" />
     <Error Condition="!Exists('packages\win2d.uwp.1.28.2\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\win2d.uwp.1.28.2\build\native\Win2D.uwp.targets'))" />
   </Target>
+
 </Project>
