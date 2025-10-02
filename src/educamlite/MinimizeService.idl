@@ -1,0 +1,8 @@
+namespace educamlite
+{
+    [default_interface]
+    runtimeclass MinimizeService : Windows.ApplicationModel.Background.IBackgroundTask
+    {
+        MinimizeService();
+    }
+}
